@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guess the Mob · Beat Janith</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0d1321; --sky:#17233a; --stone:#2b3142; --stone-hi:#4a5573; --stone-lo:#161b29;
+  --grass:#7bc950; --grass-lo:#4c8a2c; --diamond:#5ee7f0; --redstone:#ff4d4d; --gold:#ffd166;
+  --paper:#f4efe1; --ink:#1b1f2e; --text:#f1f5ff; --muted:#a8b3d1;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:linear-gradient(var(--night),var(--sky));min-height:100%}
+body{min-height:100vh;min-height:100dvh;color:var(--text);font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;overflow-x:hidden}
+body::after{content:'';position:fixed;left:0;right:0;bottom:0;height:64px;z-index:-1;background:repeating-linear-gradient(90deg,#5fa53a 0 32px,var(--grass-lo) 32px 64px);box-shadow:inset 0 10px 0 var(--grass)}
+.hidden{display:none!important}
+
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;max-width:560px;margin:0 auto;padding:18px 16px 8px}
+.brand{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--gold);text-shadow:3px 3px 0 #000;letter-spacing:1px}
+.lhs{display:flex;align-items:center;gap:12px}
+.icon-btn{width:46px;height:46px;display:grid;place-items:center;background:var(--stone);border:4px solid #000;box-shadow:inset 3px 3px 0 var(--stone-hi),inset -3px -3px 0 var(--stone-lo),4px 4px 0 #000;cursor:pointer}
+.icon-btn:active{transform:translateY(3px);box-shadow:inset 3px 3px 0 var(--stone-hi),inset -3px -3px 0 var(--stone-lo),1px 1px 0 #000}
+.icon-btn[aria-expanded="true"]{background:#3a4259}
+.icon-btn svg{width:24px;height:24px}
+.icon-btn:focus-visible{outline:3px dashed var(--gold);outline-offset:4px}
+.made{font-family:'Press Start 2P',monospace;font-size:9px;color:#000;background:var(--gold);padding:9px 12px;border:4px solid #000;box-shadow:inset -3px -3px 0 #b8861b,4px 4px 0 #000}
+
+main{max-width:560px;margin:0 auto;padding:8px 16px 96px;display:grid;gap:18px}
+.stack{display:grid;gap:18px}
+
+/* Janith */
+.stage{display:flex;flex-direction:column;align-items:center}
+#janith{width:140px;animation:bob 3s steps(4,end) infinite}
+#janith.hop{animation:hop .6s steps(3,end) 5}
+@keyframes bob{50%{transform:translateY(-10px)}}
+@keyframes hop{50%{transform:translateY(-24px)}}
+#robot{width:100%;height:auto;overflow:visible;filter:drop-shadow(6px 8px 0 rgba(0,0,0,.45))}
+.bulb{animation:glow 1.2s steps(2) infinite}
+@keyframes glow{50%{opacity:.25}}
+.antenna{transform-box:fill-box;transform-origin:50% 100%}
+#robot.thinking .antenna{animation:wig 1s steps(2) infinite}
+@keyframes wig{50%{transform:rotate(-12deg)}}
+.head{transform-box:fill-box;transform-origin:50% 50%;transition:transform .25s steps(3)}
+#robot.sad .head{transform:translateY(5px)}
+#robot.thinking .head{transform:rotate(-5deg)}
+#robot.excited .head{animation:wig2 .5s steps(2) infinite}
+@keyframes wig2{50%{transform:translateY(-3px)}}
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+#robot .eye{fill:var(--diamond)}
+#robot.happy .eye{fill:var(--grass)}
+#robot.sad .eye{fill:var(--redstone)}
+#robot.excited .eye{fill:var(--gold)}
+#robot.thinking .eye{fill:#b8c4ff}
+#robot.excited .chest{animation:bulb .3s steps(2) infinite}
+@keyframes bulb{50%{fill:#fff}}
+
+/* Speech sign */
+.bubble{position:relative;width:100%;max-width:440px;min-height:76px;margin-top:14px;padding:14px 18px;background:var(--paper);color:var(--ink);border:4px solid #000;box-shadow:inset -4px -4px 0 #cfc6aa,6px 6px 0 #000;font-size:17px;line-height:1.45;font-weight:500;text-align:center}
+#say{min-height:1.45em}
+.bubble.typing #say::after{content:'_';animation:caret .6s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+
+/* Panels */
+.panel{background:var(--stone);border:4px solid #000;box-shadow:inset 4px 4px 0 var(--stone-hi),inset -4px -4px 0 var(--stone-lo),8px 8px 0 #000;padding:20px}
+h2{font-family:'Press Start 2P',monospace;font-weight:400;font-size:14px;line-height:1.6;color:var(--gold);text-shadow:2px 2px 0 #000}
+h3{font-family:'Press Start 2P',monospace;font-weight:400;font-size:11px;line-height:1.6;color:var(--diamond)}
+.muted{color:var(--muted);font-size:15px;line-height:1.5;margin-top:8px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 10px;background:#0b0f1a;border:3px solid #000;color:var(--muted)}
+
+.input{width:100%;margin-top:14px;padding:14px;background:#0b0f1a;color:var(--text);border:4px solid #000;box-shadow:inset 3px 3px 0 #05070d;font:500 18px 'Space Grotesk',sans-serif;outline:none}
+.input:focus{box-shadow:inset 3px 3px 0 #05070d,0 0 0 3px var(--diamond)}
+.btn{margin-top:16px;width:100%;padding:16px 14px;font-family:'Press Start 2P',monospace;font-size:11px;line-height:1.5;color:#0b1a07;background:var(--grass);border:4px solid #000;box-shadow:inset 0 -6px 0 var(--grass-lo),inset 0 4px 0 #b4ea8c,0 6px 0 #000;cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:inset 0 -2px 0 var(--grass-lo),inset 0 4px 0 #b4ea8c,0 2px 0 #000}
+.btn:focus-visible,.qbtn:focus-visible,.input:focus-visible{outline:3px dashed var(--gold);outline-offset:4px}
+.shake{animation:shake .4s steps(4,end)}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+
+/* Hidden mob */
+.mobstage{position:relative;display:grid;place-items:center;margin:18px auto 6px;width:200px;height:200px;background:#1b2236;border:4px solid #000;box-shadow:inset 0 0 0 4px #252e47}
+.mobstage canvas{width:160px;height:160px;image-rendering:pixelated;animation:float 2.6s steps(4,end) infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+.qmark{position:absolute;top:10px;right:12px;font-family:'Press Start 2P',monospace;font-size:20px;color:var(--gold);text-shadow:3px 3px 0 #000;animation:caret 1s steps(2) infinite}
+.dots{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.dots i{width:14px;height:14px;background:#0b0f1a;border:3px solid #000}
+.dots i.on{background:var(--diamond);box-shadow:inset -3px -3px 0 #2aa5ad}
+
+/* Question + guess buttons */
+.qgrid,.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.qbtn{font:500 15px/1.3 'Space Grotesk',sans-serif;color:var(--text);text-align:left;padding:14px;background:#3a4259;border:4px solid #000;box-shadow:inset 0 -4px 0 #242b3e,inset 0 3px 0 #58648a;cursor:pointer}
+.qbtn:not(:disabled):hover{background:#465073}
+.qbtn:not(:disabled):active{transform:translateY(3px);box-shadow:inset 0 -1px 0 #242b3e}
+.qbtn:disabled{opacity:.35;cursor:not-allowed}
+.opt{text-align:center;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1.7;background:#4b3d6b;box-shadow:inset 0 -4px 0 #2e2344,inset 0 3px 0 #7e66b0}
+.opt:not(:disabled):hover{background:#5d4c84}
+
+/* Result */
+.result{display:grid;justify-items:center;text-align:center;gap:12px}
+#reveal{width:160px;height:160px;image-rendering:pixelated;background:#1b2236;border:4px solid #000;animation:pop .5s steps(5,end)}
+@keyframes pop{from{transform:scale(.3)}}
+.result h2{font-size:16px}
+.result .btn{margin-top:8px}
+
+.board{list-style:none;display:grid;gap:8px;margin-top:14px}
+.rank{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;background:#0b0f1a;border:3px solid #000;font-size:15px}
+.rank.me{border-color:var(--grass)}
+.rank .pos{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold)}
+.rank .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .sc{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--diamond)}
+.rank .wl{color:var(--muted);font-size:13px}
+
+.made{cursor:pointer}
+.made:active{transform:translateY(3px)}
+.made[aria-expanded="true"]{background:#ffe7a0}
+.made:focus-visible{outline:3px dashed var(--diamond);outline-offset:4px}
+.creator-head{display:flex;align-items:center;gap:16px}
+.creator-robot{animation:bob 3s steps(4,end) infinite}
+.creator-robot svg{width:96px;height:auto;display:block;overflow:visible;filter:drop-shadow(5px 6px 0 rgba(0,0,0,.45))}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.badge{font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.6;padding:10px 12px;background:#0b0f1a;border:3px solid #000;color:var(--text)}
+.badge.hl{background:var(--gold);color:#1b1407;box-shadow:0 0 0 3px #000,0 0 14px rgba(255,209,102,.5);animation:shine 1.6s steps(2) infinite}
+@keyframes shine{50%{box-shadow:0 0 0 3px #000,0 0 26px rgba(255,209,102,.9)}}
+.tour{position:fixed;inset:0;z-index:90}
+.tour-hole{position:fixed;border:4px solid var(--gold);box-shadow:0 0 0 100vmax rgba(5,8,16,.72);pointer-events:none;transition:all .35s steps(5,end);animation:holeblink 1s steps(2) infinite}
+@keyframes holeblink{50%{border-color:var(--diamond)}}
+.tour-card{position:fixed;left:50%;transform:translateX(-50%);width:min(340px,calc(100vw - 32px));background:var(--paper);color:var(--ink);border:4px solid #000;box-shadow:6px 6px 0 #000;padding:16px;display:grid;gap:12px;transition:top .35s steps(5,end)}
+.tour-card p{font-size:16px;line-height:1.45;font-weight:500}
+.tour-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tour-btn{font-family:'Press Start 2P',monospace;font-size:10px;padding:10px 12px;margin-left:6px;color:#0b1a07;background:var(--grass);border:3px solid #000;box-shadow:inset 0 -4px 0 var(--grass-lo);cursor:pointer}
+.tour-btn.ghost{background:#d9d2bd;color:var(--ink);box-shadow:inset 0 -4px 0 #a79f85}
+
+/* Confetti */
+#confetti i{position:fixed;top:-20px;width:10px;height:10px;z-index:50;pointer-events:none;animation:fall 2.8s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+@media (max-width:380px){.qgrid,.opts{grid-template-columns:1fr}.brand{font-size:11px}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="lhs">
+    <button id="boardBtn" class="icon-btn" type="button" aria-expanded="false" aria-controls="board" aria-label="Show scoreboard" title="Scoreboard"><svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="1" width="10" height="7" fill="#ffd166"/><rect x="1" y="2" width="2" height="4" fill="#ffd166"/><rect x="13" y="2" width="2" height="4" fill="#ffd166"/><rect x="7" y="8" width="2" height="2" fill="#ffd166"/><rect x="5" y="10" width="6" height="2" fill="#ffd166"/><rect x="4" y="13" width="8" height="2" fill="#b8861b"/></svg></button>
+    <div class="brand">GUESS THE MOB</div>
+  </div>
+  <button id="creatorBtn" class="made" type="button" aria-expanded="false" aria-controls="creator">Made by <b>Janith</b></button>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <div id="janith">
+      <svg id="robot" class="idle" viewBox="0 0 160 200" role="img" aria-label="Janith, a cartoon robot host">
+        <g class="antenna"><rect x="77" y="18" width="6" height="22" fill="#2b3142"/></g>
+        <rect class="bulb" x="71" y="6" width="18" height="18" fill="#ff4d4d" stroke="#000" stroke-width="4"/>
+        <g class="head">
+          <rect x="30" y="36" width="100" height="84" fill="#c9d6f5" stroke="#000" stroke-width="4"/>
+          <rect x="42" y="56" width="76" height="40" fill="#0a1020" stroke="#000" stroke-width="3"/>
+          <rect class="eye" x="54" y="64" width="16" height="22" fill="#5ee7f0"/>
+          <rect class="eye" x="90" y="64" width="16" height="22" fill="#5ee7f0"/>
+          <path id="mouth" d="M66 100 H94" fill="none" stroke="#5ee7f0" stroke-width="6"/>
+        </g>
+        <rect x="66" y="120" width="28" height="10" fill="#5b6785" stroke="#000" stroke-width="3"/>
+        <rect x="44" y="130" width="72" height="54" fill="#c9d6f5" stroke="#000" stroke-width="4"/>
+        <rect class="chest" x="72" y="144" width="16" height="16" fill="#ffd166" stroke="#000" stroke-width="3"/>
+        <rect x="22" y="136" width="18" height="36" fill="#5b6785" stroke="#000" stroke-width="3"/>
+        <rect x="120" y="136" width="18" height="36" fill="#5b6785" stroke="#000" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="bubble typing" id="bubble"><span id="say"></span></div>
+  </div>
+
+  <!-- Scoreboard -->
+  <section id="board" class="panel hidden">
+    <h3>Scoreboard</h3>
+    <p class="muted">Win a round to earn 10 points. Everyone who plays shows up here.</p>
+    <ol id="boardList" class="board"></ol>
+    <p class="muted" id="boardNote"></p>
+  </section>
+
+  <!-- Creator -->
+  <section id="creator" class="panel hidden">
+    <div class="creator-head">
+      <div class="creator-robot" id="creatorRobot"></div>
+      <div>
+        <h2>Janith</h2>
+        <p class="muted">Creator of Guess the Mob</p>
+      </div>
+    </div>
+    <div class="facts">
+      <span class="badge">Minecraft pro</span>
+      <span class="badge hl">Motion graphics designer &amp; editor</span>
+    </div>
+    <p class="muted">Built this game for you. Beat Janith if you can!</p>
+  </section>
+
+  <!-- Step 1: name -->
+  <section id="intro" class="panel">
+    <h2>Insert your name</h2>
+    <p class="muted">Janith has hidden a Minecraft mob. Ask 5 questions, then guess it. Can you beat him?</p>
+    <form id="nameForm" autocomplete="off">
+      <input id="nameInput" class="input" maxlength="16" placeholder="Your name">
+      <button class="btn" type="submit">Accept the challenge</button>
+    </form>
+  </section>
+
+  <!-- Step 2: game -->
+  <section id="game" class="stack hidden">
+    <div class="panel">
+      <div class="row"><span class="tag">Hidden mob</span><span class="tag" id="qcount">0 / 5 questions</span><span class="tag" id="scoreTag">Score 0</span></div>
+      <div class="mobstage">
+        <canvas id="mob" width="160" height="160"></canvas>
+        <span class="qmark">?</span>
+      </div>
+      <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="panel" id="questionsBox">
+      <h3>Ask Janith</h3>
+      <p class="muted">Pick up to 5 questions. Choose wisely.</p>
+      <div id="qlist" class="qgrid"></div>
+    </div>
+
+    <div class="panel hidden" id="guessBox">
+      <h3>Make your guess</h3>
+      <p class="muted">One of these is the hidden mob.</p>
+      <div id="opts" class="opts"></div>
+    </div>
+  </section>
+
+  <!-- Step 3: result -->
+  <section id="result" class="panel result hidden">
+    <canvas id="reveal" width="160" height="160"></canvas>
+    <h2 id="resTitle"></h2>
+    <p class="muted" id="resText"></p>
+    <button id="againBtn" class="btn" type="button">Let's try again</button>
+  </section>
+</main>
+
+<div id="tour" class="tour hidden" role="dialog" aria-modal="true" aria-label="How to use this page">
+  <div id="tourHole" class="tour-hole"></div>
+  <div id="tourCard" class="tour-card">
+    <p id="tourText"></p>
+    <div class="tour-row">
+      <span class="tag" id="tourCount"></span>
+      <div><button id="tourSkip" class="tour-btn ghost" type="button">Skip</button><button id="tourNext" class="tour-btn" type="button">Next</button></div>
+    </div>
+  </div>
+</div>
+<div id="confetti"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => a.sort(() => Math.random() - 0.5);
+
+/* ---------- AI-style mob generator ---------- */
+const NAME_A = ['Glim','Vex','Mor','Zhal','Bram','Quil','Nyx','Skor','Ember','Frost','Thorn','Wisp','Krell','Ombra'];
+const NAME_B = ['mire','gorn','talon','shade','bloom','fang','wraith','crag','hollow','drift','nox'];
+const NAME_T = ['Stalker','Warden','Golem','Crawler','Sentinel','Drifter','Hound','Beast'];
+const makeName = () => `${pick(NAME_A)}${pick(NAME_B)} ${pick(NAME_T)}`;
+
+const HABITATS = [
+  'It lives in the Overworld, deep inside dark forests.',
+  'It lives in the Nether, close to the lava lakes.',
+  'It lives in the End, drifting above the void.',
+  'It lives underground, deep in the caves.',
+  'It lives in swamps, among the mud and lily pads.',
+  'It lives on the snowy tundra.'
+];
+const COLORS = [
+  {name:'emerald green', base:'#2ecc71', dark:'#1b8a4b', eye:'#eafff4'},
+  {name:'violet purple', base:'#9b5de5', dark:'#5f2fa8', eye:'#f5e6ff'},
+  {name:'ash gray',      base:'#9aa0a6', dark:'#5b6168', eye:'#ff4d4d'},
+  {name:'ice blue',      base:'#6fd3ff', dark:'#2f86b8', eye:'#ffffff'},
+  {name:'crimson red',   base:'#e63946', dark:'#8f1d26', eye:'#ffd166'},
+  {name:'golden yellow', base:'#f4c542', dark:'#a8781a', eye:'#2b1d00'}
+];
+const POWERS = [
+  'launches fireballs','teleports short distances','heals nearby mobs',
+  'shoots sharp spikes','freezes the ground under players','summons tiny clones of itself'
+];
+
+// 8x8 pixel body, mirrored. 1 = body, 2 = eye, 3 = shadow
+function genSprite(){
+  const g = Array.from({length:8}, () => Array(8).fill(0));
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 4; c++) {
+    const on = c === 3 || Math.random() < (r === 0 || r === 7 ? 0.35 : 0.85);
+    const v = on ? (r >= 6 ? 3 : 1) : 0;
+    g[r][c] = v; g[r][7 - c] = v;
+  }
+  g[2][2] = g[2][5] = 1;
+  g[3][2] = g[3][5] = 2;
+  return g;
+}
+
+function makeMob(){
+  return {
+    name: makeName(),
+    habitat: pick(HABITATS),
+    color: pick(COLORS),
+    hostile: Math.random() < 0.5,
+    big: Math.random() < 0.5,
+    fly: Math.random() < 0.4,
+    glow: Math.random() < 0.4,
+    night: Math.random() < 0.5,
+    power: pick(POWERS),
+    grid: genSprite()
+  };
+}
+
+function drawMob(cv, m, hidden){
+  const x = cv.getContext('2d'), s = cv.width / 8;
+  x.clearRect(0, 0, cv.width, cv.height);
+  m.grid.forEach((row, r) => row.forEach((v, c) => {
+    if (!v) return;
+    const col = hidden
+      ? (v === 2 ? '#5ee7f0' : v === 3 ? '#141a2b' : '#243049')
+      : (v === 1 ? m.color.base : v === 3 ? m.color.dark : m.color.eye);
+    x.fillStyle = col;
+    x.fillRect(c * s, r * s, s, s);
+  }));
+}
+
+/* ---------- Fixed questions and answers (the only things a player can ask) ---------- */
+const ALL_Q = [
+  {id:'habitat', text:'Where does it live?'},
+  {id:'hostile', text:'Is it hostile to players?'},
+  {id:'big',     text:'Is it bigger than a player?'},
+  {id:'fly',     text:'Can it fly?'},
+  {id:'glow',    text:'Does its body glow?'},
+  {id:'color',   text:'What color is its body?'},
+  {id:'night',   text:'Does it only come out at night?'},
+  {id:'power',   text:'What special power does it have?'}
+];
+
+const ANS = {
+  habitat: m => m.habitat,
+  hostile: m => m.hostile ? 'Yes, it attacks players on sight.' : 'No, it is peaceful and only fights back when provoked.',
+  big:     m => m.big ? 'Yes, it is much taller than a player.' : 'No, it is smaller than a player.',
+  fly:     m => m.fly ? 'Yes, it floats and flies through the air.' : 'No, it stays firmly on the ground.',
+  glow:    m => m.glow ? 'Yes, its body gives off a soft light in the dark.' : 'No, its body does not glow at all.',
+  color:   m => `Its body is mostly ${m.color.name}.`,
+  night:   m => m.night ? 'Yes, it only comes out after the sun goes down.' : 'No, you can meet it at any time of day.',
+  power:   m => `It ${m.power}.`
+};
+
+/* ---------- Janith's moods ---------- */
+const MOUTHS = {
+  idle:     'M66 100 H94',
+  happy:    'M58 92 H64 V102 H96 V92 H102',
+  sad:      'M58 106 H64 V96 H96 V106 H102',
+  excited:  'M60 92 H100 V110 H60 Z',
+  thinking: 'M70 102 H90'
+};
+function setMood(m){
+  $('robot').setAttribute('class', m);
+  $('janith').classList.toggle('hop', m === 'excited');
+  const mouth = $('mouth');
+  mouth.setAttribute('d', MOUTHS[m]);
+  mouth.setAttribute('fill', m === 'excited' ? '#5ee7f0' : 'none');
+}
+
+let typeRun = 0;
+function say(text, mood){
+  if (mood) setMood(mood);
+  const run = ++typeRun, el = $('say'), box = $('bubble');
+  let i = 0;
+  el.textContent = '';
+  box.classList.add('typing');
+  (function tick(){
+    if (run !== typeRun) return;
+    el.textContent = text.slice(0, i++);
+    if (i <= text.length) setTimeout(tick, 20);
+    else box.classList.remove('typing');
+  })();
+}
+
+/* ---------- Game state ---------- */
+let player = '', S = null;
+let db = null, board = {};
+
+function keyOf(n){ return n.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 40) || 'player'; }
+
+function renderBoard(){
+  const rows = Object.values(board).sort((a, b) => b.score - a.score || b.wins - a.wins);
+  const list = $('boardList');
+  list.innerHTML = '';
+  if (!rows.length) {
+    list.innerHTML = '<li class="muted">No players yet. Finish a round to join the board.</li>';
+    return;
+  }
+  rows.forEach((r, i) => {
+    const li = document.createElement('li');
+    li.className = 'rank' + (r.name === player ? ' me' : '');
+    [['pos', '#' + (i + 1)], ['nm', r.name], ['sc', r.score + ' pts'], ['wl', r.wins + 'W ' + r.losses + 'L']].forEach(([cls, txt]) => {
+      const s = document.createElement('span');
+      s.className = cls;
+      s.textContent = txt;
+      li.appendChild(s);
+    });
+    list.appendChild(li);
+  });
+}
+
+function updateScoreTag(){
+  $('scoreTag').textContent = 'Score ' + ((board[keyOf(player)] || {}).score || 0);
+}
+
+function recordResult(won){
+  const key = keyOf(player);
+  const prev = board[key] || {name: player, score: 0, wins: 0, losses: 0};
+  const rec = {
+    name: player,
+    score: prev.score + (won ? 10 : 0),
+    wins: prev.wins + (won ? 1 : 0),
+    losses: prev.losses + (won ? 0 : 1)
+  };
+  board[key] = rec;
+  renderBoard();
+  updateScoreTag();
+  if (db) db.collection('players').doc(key).set(rec).catch(() => {
+    $('boardNote').textContent = 'Could not save your latest score.';
+  });
+}
+
+function listen(){
+  db.collection('players').orderBy('score', 'desc').limit(50).onSnapshot(snap => {
+    board = {};
+    snap.docs.forEach(d => { if (d.exists) board[d.id] = d.data(); });
+    renderBoard();
+    updateScoreTag();
+  }, () => { $('boardNote').textContent = 'Live scores paused. Reload to reconnect.'; });
+}
+
+function newGame(msg){
+  S = {mob: makeMob(), asked: [], busy: false};
+  $('result').classList.add('hidden');
+  $('game').classList.remove('hidden');
+  $('guessBox').classList.add('hidden');
+  $('questionsBox').classList.remove('hidden');
+  drawMob($('mob'), S.mob, true);
+  renderQuestions();
+  updateCount();
+  updateScoreTag();
+  say(msg, 'happy');
+}
+
+function renderQuestions(){
+  const box = $('qlist');
+  box.innerHTML = '';
+  ALL_Q.forEach(q => {
+    const b = document.createElement('button');
+    b.className = 'qbtn';
+    b.type = 'button';
+    b.textContent = q.text;
+    b.disabled = S.busy || S.asked.length >= 5 || S.asked.includes(q.id);
+    b.onclick = () => ask(q.id);
+    box.appendChild(b);
+  });
+}
+
+function updateCount(){
+  $('qcount').textContent = `${S.asked.length} / 5 questions`;
+  document.querySelectorAll('#dots i').forEach((d, i) => d.classList.toggle('on', i < S.asked.length));
+}
+
+function ask(id){
+  if (!S || S.busy || S.asked.length >= 5 || S.asked.includes(id)) return;
+  S.asked.push(id);
+  S.busy = true;
+  renderQuestions();
+  updateCount();
+  const answer = ANS[id](S.mob);
+  say('Hmm, let me check my circuits...', 'thinking');
+  setTimeout(() => {
+    say(answer, 'happy');
+    setTimeout(() => {
+      S.busy = false;
+      renderQuestions();
+      if (S.asked.length === 5) finishQuestions();
+    }, answer.length * 20 + 300);
+  }, 900);
+}
+
+function finishQuestions(){
+  say('Five questions done! Now guess which mob I hid.', 'excited');
+  $('questionsBox').classList.add('hidden');
+  $('guessBox').classList.remove('hidden');
+  const set = new Set([S.mob.name]);
+  while (set.size < 4) set.add(makeName());
+  const box = $('opts');
+  box.innerHTML = '';
+  shuffle([...set]).forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'qbtn opt';
+    b.type = 'button';
+    b.textContent = n;
+    b.onclick = () => finish(n);
+    box.appendChild(b);
+  });
+}
+
+function finish(guess){
+  recordResult(guess === S.mob.name);
+  $('game').classList.add('hidden');
+  $('result').classList.remove('hidden');
+  drawMob($('reveal'), S.mob, false);
+  if (guess === S.mob.name) {
+    confetti();
+    $('resTitle').textContent = 'You beat Janith!';
+    $('resText').textContent = `${player}, you found the ${S.mob.name}. Legendary.`;
+    say(`You beat me, ${player}! Let's try again?`, 'excited');
+  } else {
+    const st = $('stage');
+    st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
+    $('resTitle').textContent = 'You lose!';
+    $('resText').textContent = `The hidden mob was the ${S.mob.name}.`;
+    say('You lose. You are a noob in Minecraft.', 'sad');
+  }
+}
+
+function confetti(){
+  const host = $('confetti');
+  const cols = ['#7bc950','#5ee7f0','#ffd166','#ff4d4d','#f4efe1'];
+  for (let i = 0; i < 120; i++) {
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = pick(cols);
+    p.style.animationDelay = Math.random() * 0.6 + 's';
+    p.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+    host.appendChild(p);
+    setTimeout(() => p.remove(), 4800);
+  }
+}
+
+/* ---------- Wiring ---------- */
+$('nameForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = $('nameInput');
+  player = inp.value.trim().slice(0, 16);
+  if (!player) {
+    inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+    say('Hey, I need a name before we start!', 'sad');
+    return;
+  }
+  $('intro').classList.add('hidden');
+  newGame(`Hi ${player}! I hid a secret Minecraft mob. Ask me 5 questions, then guess it.`);
+});
+
+$('againBtn').onclick = () => newGame(`Let's try again, ${player}! I hid a brand-new mob. Ask your 5 questions.`);
+
+say(`Hey, I'm Janith! Think you can beat me? Insert your name below and I'll hide a Minecraft mob.`, 'happy');
+
+renderBoard();
+const dbReady = window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null);
+dbReady.then(d => {
+  db = d;
+  if (db) listen(); else $('boardNote').textContent = 'Scores are kept for this visit only.';
+}).catch(() => { $('boardNote').textContent = 'Scores are kept for this visit only.'; });
+
+$('boardBtn').onclick = () => {
+  const hidden = $('board').classList.toggle('hidden');
+  $('boardBtn').setAttribute('aria-expanded', String(!hidden));
+};
+
+$('creatorBtn').onclick = () => {
+  const hidden = $('creator').classList.toggle('hidden');
+  $('creatorBtn').setAttribute('aria-expanded', String(!hidden));
+};
+const crClone = $('robot').cloneNode(true);
+crClone.removeAttribute('id');
+crClone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+crClone.setAttribute('class', 'idle');
+$('creatorRobot').appendChild(crClone);
+
+const TOUR = [
+  {el: 'boardBtn', text: "This trophy is the scoreboard. Tap it to see every player's name and score."},
+  {el: 'creatorBtn', text: 'Tap "Made by Janith" to meet the creator and see the details.'}
+];
+let tourAt = 0;
+
+function placeTour(){
+  const t = TOUR[tourAt], r = $(t.el).getBoundingClientRect(), pad = 8;
+  const hole = $('tourHole');
+  hole.style.left = (r.left - pad) + 'px';
+  hole.style.top = (r.top - pad) + 'px';
+  hole.style.width = (r.width + pad * 2) + 'px';
+  hole.style.height = (r.height + pad * 2) + 'px';
+  $('tourCard').style.top = (r.bottom + pad + 22) + 'px';
+  $('tourText').textContent = t.text;
+  $('tourCount').textContent = (tourAt + 1) + ' / ' + TOUR.length;
+  $('tourNext').textContent = tourAt === TOUR.length - 1 ? 'Got it' : 'Next';
+}
+
+function startTour(){
+  tourAt = 0;
+  window.scrollTo(0, 0);
+  placeTour();
+  $('tour').classList.remove('hidden');
+}
+
+function endTour(){ $('tour').classList.add('hidden'); }
+
+$('tourNext').onclick = () => {
+  if (tourAt >= TOUR.length - 1) endTour();
+  else { tourAt++; placeTour(); }
+};
+$('tourSkip').onclick = endTour;
+window.addEventListener('resize', () => {
+  if (!$('tour').classList.contains('hidden')) placeTour();
+});
+window.addEventListener('load', () => setTimeout(startTour, 300));
+</script>
+</body>
+</html>
